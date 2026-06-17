@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Market Watchlist</title>
+    <style>
+        :root {
+            --bg-matte: #121212;
+            --surface-matte: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #888888;
+            --accent-green: #00c853;
+            --accent-red: #ff3d00;
+            --accent-warning: #ffb300;
+            --border-color: #333333;
+        }
+
+        body {
+            background-color: var(--bg-matte);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .header-panel {
+            background-color: var(--surface-matte);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 1.2rem; font-weight: 500; color: var(--text-muted); }
+
+        .status-indicator {
+            font-size: 0.9rem;
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            height: 8px; width: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-green);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            background-color: var(--surface-matte);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        input, button {
+            background-color: var(--bg-matte);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            border-radius: 4px;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        button {
+            cursor: pointer; background-color: #333333; font-weight: bold; transition: background 0.2s;
+        }
+
+        button:hover { background-color: #444444; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .watchlist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            width: 100%;
+        }
+
+        .stock-card {
+            background-color: var(--surface-matte);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; font-size: 1.4rem; font-weight: bold; }
+        .price { font-size: 2.2rem; font-weight: 300; letter-spacing: -0.5px; }
+        .pnl { font-size: 1rem; font-weight: 500; }
+        
+        .positive { color: var(--accent-green); }
+        .negative { color: var(--accent-red); }
+        .error-text { color: var(--accent-warning); font-size: 1rem; }
+        
+        .log-section {
+            margin-top: 15px; font-size: 0.9rem; color: var(--text-muted);
+            border-top: 1px solid var(--border-color); padding-top: 15px; line-height: 1.6;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 10px;
+            transition: color 0.2s;
+        }
+
+        .delete-btn:hover {
+            color: var(--accent-red);
+            background: none;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .loader { text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 40px; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="header-panel">
+        <h1>Live Market Dashboard</h1>
+        <div class="status-indicator"><span class="dot"></span> 2-Way Sync Active</div>
+    </div>
+
+    <div class="controls">
+        <input type="text" id="tickerInput" placeholder="Enter Ticker (e.g. TSLA)">
+        <button onclick="addStockToSheet()" id="addBtn">Add to Sheet</button>
+    </div>
+
+    <div class="watchlist-grid" id="watchlistGrid">
+        <div class="loader" id="loaderText">Fetching data from Google Sheets...</div>
+    </div>
+</div>
+
+<script>
+    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5eCO5hJXcasYter7hNxTqeHFz3Mt7WTED8EM_X37iemMID33-Lmyp3-R98U1-QufMwIeeS0YyhdOl/pub?gid=920182859&single=true&output=csv'; 
+    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6ujxBp3ha-RvI9XU4BntaZwgEHG3Y8JliDQXODvo7gow_EAnxzQ3JLbX1lyw2WJ-U/exec'; 
+    const UPDATE_INTERVAL_SECONDS = 30; 
+
+    // --- CSV PARSER (Prevents commas in prices like $1,000 from breaking the grid) ---
+    function parseCSVRow(row) {
+        const cols = [];
+        let curr = '';
+        let inQuotes = false;
+        for(let i=0; i<row.length; i++) {
+            let char = row[i];
+            if (char === '"' && row[i+1] === '"') { curr += '"'; i++; } 
+            else if (char === '"') { inQuotes = !inQuotes; } 
+            else if (char === ',' && !inQuotes) { cols.push(curr); curr = ''; } 
+            else { curr += char; }
+        }
+        cols.push(curr);
+        return cols;
+    }
+
+    // --- WRITE (ADD) LOGIC ---
+    async function addStockToSheet() {
+        const input = document.getElementById('tickerInput');
+        const btn = document.getElementById('addBtn');
+        const ticker = input.value.trim();
+
+        if (!ticker) return;
+
+        btn.innerText = 'Writing...';
+        btn.disabled = true;
+
+        try {
+            await fetch(`${APP_SCRIPT_URL}?action=add&ticker=${encodeURIComponent(ticker)}`);
+            input.value = '';
+            setTimeout(fetchSheetData, 2000); // Reload view
+        } catch (error) {
+            console.error(error);
+            alert("Error writing to sheet.");
+        } finally {
+            btn.innerText = 'Add to Sheet';
+            btn.disabled = false;
+        }
+    }
+
+    // --- DELETE LOGIC ---
+    async function deleteStockFromSheet(ticker, btnElement) {
+        if (!confirm(`Are you sure you want to delete ${ticker} from your watchlist?`)) return;
+
+        btnElement.disabled = true;
+        btnElement.style.color = '#ff3d00'; // Make it red while deleting
+        
+        try {
+            await fetch(`${APP_SCRIPT_URL}?action=delete&ticker=${encodeURIComponent(ticker)}`);
+            setTimeout(fetchSheetData, 1500); // Reload view
+        } catch (error) {
+            console.error(error);
+            alert("Error deleting from sheet.");
+            btnElement.disabled = false;
+        }
+    }
+
+    // --- READ LOGIC ---
+    async function fetchSheetData() {
+        try {
+            const cacheBuster = `&t=${new Date().getTime()}`;
+            const response = await fetch(SHEET_CSV_URL + cacheBuster);
+            if (!response.ok) throw new Error("Network response was not ok");
+            const csvText = await response.text();
+            processCSV(csvText);
+        } catch (error) {
+            document.getElementById('loaderText').innerText = 'Failed to connect. Check CSV link.';
+        }
+    }
+
+    function processCSV(csvText) {
+        const rows = csvText.split(/\r?\n/).map(row => row.trim()).filter(row => row);
+        const dataRows = rows.slice(1); 
+        const grid = document.getElementById('watchlistGrid');
+        grid.innerHTML = ''; 
+
+        if (dataRows.length === 0) {
+            grid.innerHTML = '<div class="loader">No stocks found in your spreadsheet.</div>';
+            return;
+        }
+
+        dataRows.forEach(row => {
+            const columns = parseCSVRow(row); 
+            
+            if (columns.length >= 5) {
+                const ticker = columns[0].replace(/['"]/g, ''); 
+                const rawPrice = columns[1];
+                const rawInvested = columns[2];
+                const rawHistorical = columns[3];
+                const rawPnl = columns[4];
+
+                const hasError = [rawPrice, rawInvested, rawHistorical, rawPnl].some(val => 
+                    val.includes('#N/A') || val.includes('#VALUE!') || val.includes('#REF!')
+                );
+
+                if (ticker) createOrUpdateCard(ticker, rawPrice, rawInvested, rawHistorical, rawPnl, hasError);
+            }
+        });
+    }
+
+    function createOrUpdateCard(ticker, rawPrice, rawInvested, rawHistorical, rawPnl, hasError) {
+        const grid = document.getElementById('watchlistGrid');
+        const card = document.createElement('div');
+        card.className = 'stock-card';
+        
+        const deleteHTML = `<button class="delete-btn" onclick="deleteStockFromSheet('${ticker}', this)" title="Delete ${ticker}">✖</button>`;
+
+        if (hasError) {
+            card.innerHTML = `
+                <div class="card-header">
+                    <span>${ticker}</span>
+                    <div class="header-right">
+                        <span style="font-size:0.8rem; color:var(--accent-warning);">Loading...</span>
+                        ${deleteHTML}
+                    </div>
+                </div>
+                <div class="price error-text">Calculating...</div>
+                <div class="pnl error-text">Waiting for Google Finance</div>
+            `;
+        } else {
+            const livePrice = parseFloat(rawPrice.replace(/[^0-9.-]+/g,""));       
+            const invested = parseFloat(rawInvested.replace(/[^0-9.-]+/g,""));        
+            const historicalPrice = parseFloat(rawHistorical.replace(/[^0-9.-]+/g,"")); 
+            const profitLoss = parseFloat(rawPnl.replace(/[^0-9.-]+/g,""));    
+
+            const isPositive = profitLoss >= 0;
+            const pnlClass = isPositive ? 'positive' : 'negative';
+            const sign = isPositive ? '+' : '';
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <span>${ticker}</span>
+                    <div class="header-right">
+                        <span style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">Synced</span>
+                        ${deleteHTML}
+                    </div>
+                </div>
+                <div class="price">$${livePrice.toFixed(2)}</div>
+                <div class="pnl ${pnlClass}">P&L ($${invested.toFixed(2)}): ${sign}$${Math.abs(profitLoss).toFixed(2)}</div>
+                <div class="log-section">Initial Price (1M Ago): $${historicalPrice.toFixed(2)}</div>
+            `;
+        }
+        grid.appendChild(card);
+    }
+
+    fetchSheetData(); 
+    setInterval(fetchSheetData, UPDATE_INTERVAL_SECONDS * 1000);
+</script>
+</body>
+</html>
