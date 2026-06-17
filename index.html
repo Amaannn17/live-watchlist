@@ -168,7 +168,7 @@
     const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6ujxBp3ha-RvI9XU4BntaZwgEHG3Y8JliDQXODvo7gow_EAnxzQ3JLbX1lyw2WJ-U/exec'; 
     const UPDATE_INTERVAL_SECONDS = 30; 
 
-    // --- CSV PARSER (Prevents commas in prices like $1,000 from breaking the grid) ---
+    // Advanced CSV Parser
     function parseCSVRow(row) {
         const cols = [];
         let curr = '';
@@ -213,7 +213,7 @@
         if (!confirm(`Are you sure you want to delete ${ticker} from your watchlist?`)) return;
 
         btnElement.disabled = true;
-        btnElement.style.color = '#ff3d00'; // Make it red while deleting
+        btnElement.style.color = '#ff3d00'; 
         
         try {
             await fetch(`${APP_SCRIPT_URL}?action=delete&ticker=${encodeURIComponent(ticker)}`);
@@ -252,18 +252,20 @@
         dataRows.forEach(row => {
             const columns = parseCSVRow(row); 
             
-            if (columns.length >= 5) {
+            // Ensure we have data and the ticker cell is not completely blank
+            if (columns.length >= 5 && columns[0].trim() !== '') {
                 const ticker = columns[0].replace(/['"]/g, ''); 
                 const rawPrice = columns[1];
                 const rawInvested = columns[2];
                 const rawHistorical = columns[3];
                 const rawPnl = columns[4];
 
+                // Safely check for Google Finance specific errors
                 const hasError = [rawPrice, rawInvested, rawHistorical, rawPnl].some(val => 
-                    val.includes('#N/A') || val.includes('#VALUE!') || val.includes('#REF!')
+                    val && (val.includes('#N/A') || val.includes('#VALUE!') || val.includes('#REF!'))
                 );
 
-                if (ticker) createOrUpdateCard(ticker, rawPrice, rawInvested, rawHistorical, rawPnl, hasError);
+                createOrUpdateCard(ticker, rawPrice, rawInvested, rawHistorical, rawPnl, hasError);
             }
         });
     }
@@ -284,18 +286,29 @@
                         ${deleteHTML}
                     </div>
                 </div>
-                <div class="price error-text">Calculating...</div>
+                <div class="price error-text" style="font-size: 1.5rem;">Calculating...</div>
                 <div class="pnl error-text">Waiting for Google Finance</div>
             `;
         } else {
-            const livePrice = parseFloat(rawPrice.replace(/[^0-9.-]+/g,""));       
-            const invested = parseFloat(rawInvested.replace(/[^0-9.-]+/g,""));        
-            const historicalPrice = parseFloat(rawHistorical.replace(/[^0-9.-]+/g,"")); 
-            const profitLoss = parseFloat(rawPnl.replace(/[^0-9.-]+/g,""));    
+            // Strip text, but protect against undefined or completely empty strings to prevent NaN
+            const livePrice = parseFloat((rawPrice || "").replace(/[^0-9.-]+/g,""));       
+            const invested = parseFloat((rawInvested || "").replace(/[^0-9.-]+/g,""));        
+            const historicalPrice = parseFloat((rawHistorical || "").replace(/[^0-9.-]+/g,"")); 
+            const profitLoss = parseFloat((rawPnl || "").replace(/[^0-9.-]+/g,""));    
 
-            const isPositive = profitLoss >= 0;
-            const pnlClass = isPositive ? 'positive' : 'negative';
-            const sign = isPositive ? '+' : '';
+            // Format numbers safely, falling back to a loading state if NaN
+            const safePrice = isNaN(livePrice) ? '<span style="font-size: 1.5rem; color: #888;">Calculating...</span>' : `$${livePrice.toFixed(2)}`;
+            const safeInvested = isNaN(invested) ? '100.00' : invested.toFixed(2);
+            
+            let safePnl = '...';
+            let pnlClass = '';
+            if (!isNaN(profitLoss)) {
+                const isPositive = profitLoss >= 0;
+                pnlClass = isPositive ? 'positive' : 'negative';
+                safePnl = `${isPositive ? '+' : '-'}$${Math.abs(profitLoss).toFixed(2)}`;
+            }
+
+            const safeHistorical = isNaN(historicalPrice) ? '...' : `$${historicalPrice.toFixed(2)}`;
 
             card.innerHTML = `
                 <div class="card-header">
@@ -305,9 +318,9 @@
                         ${deleteHTML}
                     </div>
                 </div>
-                <div class="price">$${livePrice.toFixed(2)}</div>
-                <div class="pnl ${pnlClass}">P&L ($${invested.toFixed(2)}): ${sign}$${Math.abs(profitLoss).toFixed(2)}</div>
-                <div class="log-section">Initial Price (1M Ago): $${historicalPrice.toFixed(2)}</div>
+                <div class="price">${safePrice}</div>
+                <div class="pnl ${pnlClass}">P&L ($${safeInvested}): ${safePnl}</div>
+                <div class="log-section">Initial Price (1M Ago): ${safeHistorical}</div>
             `;
         }
         grid.appendChild(card);
