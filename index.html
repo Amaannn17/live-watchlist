@@ -49,76 +49,31 @@
 
         h1 { margin: 0; font-size: 1.2rem; font-weight: 500; color: var(--text-muted); }
 
-        .status-indicator {
-            font-size: 0.9rem;
-            color: var(--accent-green);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .dot {
-            height: 8px; width: 8px;
-            background-color: var(--accent-green);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--accent-green);
-        }
+        .status-indicator { font-size: 0.9rem; color: var(--accent-green); display: flex; align-items: center; gap: 8px; }
+        .dot { height: 8px; width: 8px; background-color: var(--accent-green); border-radius: 50%; box-shadow: 0 0 8px var(--accent-green); }
 
         .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            background-color: var(--surface-matte);
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            align-items: center;
+            display: flex; gap: 15px; background-color: var(--surface-matte); padding: 20px;
+            border-radius: 8px; border: 1px solid var(--border-color); align-items: center;
         }
-
-        .control-group {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            border-right: 1px solid var(--border-color);
-            padding-right: 15px;
-        }
-
-        .control-group:last-child { border-right: none; }
 
         input, button {
-            background-color: var(--bg-matte);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 10px 15px;
-            border-radius: 4px;
-            outline: none;
-            font-size: 1rem;
+            background-color: var(--bg-matte); color: var(--text-main); border: 1px solid var(--border-color);
+            padding: 10px 15px; border-radius: 4px; outline: none; font-size: 1rem;
         }
 
-        button {
-            cursor: pointer; background-color: #333333; font-weight: bold; transition: background 0.2s;
-        }
-
+        button { cursor: pointer; background-color: #333333; font-weight: bold; transition: background 0.2s; }
         button:hover { background-color: #444444; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .watchlist-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 20px;
-            width: 100%;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; width: 100%;
         }
 
         .stock-card {
-            background-color: var(--surface-matte);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            position: relative;
+            background-color: var(--surface-matte); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 25px; display: flex; flex-direction: column;
+            gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative;
         }
 
         .card-header { display: flex; justify-content: space-between; align-items: center; font-size: 1.4rem; font-weight: bold; }
@@ -129,37 +84,34 @@
         .negative { color: var(--accent-red); }
         .error-text { color: var(--accent-warning); font-size: 1rem; }
         
-        .log-section {
-            margin-top: 10px; font-size: 0.9rem; color: var(--text-muted);
-            border-top: 1px solid var(--border-color); padding-top: 15px; line-height: 1.6;
-        }
+        .log-section { margin-top: 5px; font-size: 0.9rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 15px; }
 
         .manual-logs-container {
-            margin-top: 10px;
-            background-color: var(--card-bg);
-            border-radius: 6px;
-            padding: 12px;
-            border: 1px solid var(--border-color);
+            margin-top: 10px; background-color: var(--card-bg); border-radius: 6px; padding: 12px; border: 1px solid var(--border-color);
         }
 
-        .logs-title { font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; color: #aaa; text-transform: uppercase;}
+        .logs-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+        }
+
+        .logs-title { font-size: 0.8rem; font-weight: bold; color: #aaa; text-transform: uppercase; }
+        
+        .snapshot-btn {
+            background-color: var(--bg-matte); border: 1px solid var(--border-color); color: var(--text-main);
+            font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; font-weight: normal; cursor: pointer;
+        }
+
+        .snapshot-btn:hover { border-color: var(--accent-green); color: var(--accent-green); }
         
         .log-pill {
-            display: flex;
-            justify-content: space-between;
-            background-color: var(--bg-matte);
-            padding: 6px 10px;
-            border-radius: 4px;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-            border: 1px solid #2a2a2a;
+            display: flex; justify-content: space-between; background-color: var(--bg-matte);
+            padding: 6px 10px; border-radius: 4px; margin-bottom: 5px; font-size: 0.9rem; border: 1px solid #2a2a2a;
         }
 
         .log-pill:last-child { margin-bottom: 0; }
-        
         .diff-text { font-size: 0.85rem; font-weight: bold; }
 
-        .delete-btn { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 0; margin-left: 10px; transition: color 0.2s;}
+        .delete-btn { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 0; margin-left: 10px; transition: color 0.2s; }
         .delete-btn:hover { color: var(--accent-red); }
         .header-right { display: flex; align-items: center; }
         .loader { text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 40px; }
@@ -174,14 +126,8 @@
     </div>
 
     <div class="controls">
-        <div class="control-group">
-            <input type="text" id="tickerInput" placeholder="Ticker (e.g. TSLA)" style="width: 140px;">
-            <button onclick="addStockToSheet()" id="addBtn">Add Stock</button>
-        </div>
-        <div class="control-group">
-            <input type="number" id="logValueInput" placeholder="Value ($)" style="width: 100px;">
-            <button onclick="addManualLog()" id="logBtn">Log Data</button>
-        </div>
+        <input type="text" id="tickerInput" placeholder="Ticker (e.g. TSLA)">
+        <button onclick="addStockToSheet()" id="addBtn">Add Stock</button>
     </div>
 
     <div class="watchlist-grid" id="watchlistGrid">
@@ -190,11 +136,10 @@
 </div>
 
 <script>
-    // Paste your Web App URL here (Must end in /exec)
-    const APP_SCRIPT_URL = 'YOUR_WEB_APP_LINK_HERE'; 
+    // Configured Web App URL
+    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6ujxBp3ha-RvI9XU4BntaZwgEHG3Y8JliDQXODvo7gow_EAnxzQ3JLbX1lyw2WJ-U/exec'; 
     const UPDATE_INTERVAL_SECONDS = 60; 
 
-    // --- WRITE LOGIC (ADD STOCK) ---
     async function addStockToSheet() {
         const input = document.getElementById('tickerInput');
         const btn = document.getElementById('addBtn');
@@ -205,36 +150,26 @@
 
         try {
             await fetch(`${APP_SCRIPT_URL}?action=add&ticker=${encodeURIComponent(ticker)}`);
+            input.value = '';
             setTimeout(fetchSheetData, 1000); 
         } catch (error) { alert("Error adding stock."); } 
         finally { btn.innerText = 'Add Stock'; btn.disabled = false; }
     }
 
-    // --- WRITE LOGIC (MANUAL LOG) ---
-    async function addManualLog() {
-        const tickerInput = document.getElementById('tickerInput');
-        const valueInput = document.getElementById('logValueInput');
-        const btn = document.getElementById('logBtn');
-        
-        const ticker = tickerInput.value.trim();
-        const logValue = valueInput.value.trim();
-
-        if (!ticker || !logValue) {
-            alert("Please enter both a Ticker and a Value to log.");
-            return;
-        }
-
-        btn.innerText = 'Logging...'; btn.disabled = true;
+    async function logCurrentPrice(ticker, btnElement) {
+        btnElement.innerText = 'Saving...'; 
+        btnElement.disabled = true;
 
         try {
-            await fetch(`${APP_SCRIPT_URL}?action=log&ticker=${encodeURIComponent(ticker)}&value=${encodeURIComponent(logValue)}`);
-            valueInput.value = ''; // Clear value, keep ticker for rapid entry
+            await fetch(`${APP_SCRIPT_URL}?action=log&ticker=${encodeURIComponent(ticker)}`);
             setTimeout(fetchSheetData, 1000); 
-        } catch (error) { alert("Error adding log."); } 
-        finally { btn.innerText = 'Log Data'; btn.disabled = false; }
+        } catch (error) { 
+            alert("Error logging price."); 
+            btnElement.innerText = 'Snapshot'; 
+            btnElement.disabled = false; 
+        }
     }
 
-    // --- DELETE LOGIC ---
     async function deleteStockFromSheet(ticker, btnElement) {
         if (!confirm(`Are you sure you want to delete ${ticker}?`)) return;
         btnElement.disabled = true; btnElement.style.color = '#ff3d00'; 
@@ -245,7 +180,6 @@
         } catch (error) { alert("Error deleting."); btnElement.disabled = false; }
     }
 
-    // --- READ LOGIC ---
     async function fetchSheetData() {
         try {
             const response = await fetch(`${APP_SCRIPT_URL}?action=read&t=${new Date().getTime()}`);
@@ -289,15 +223,17 @@
         
         const deleteHTML = `<button class="delete-btn" onclick="deleteStockFromSheet('${ticker}', this)" title="Delete ${ticker}">✖</button>`;
 
-        // Generate the HTML for the Manual Logs timeline
-        let logsHTML = '';
+        let logsHTML = `<div class="manual-logs-container">
+                            <div class="logs-header">
+                                <span class="logs-title">Checkpoints</span>
+                                <button class="snapshot-btn" onclick="logCurrentPrice('${ticker}', this)">Snapshot</button>
+                            </div>`;
+        
         if (manualLogs.length > 0) {
-            logsHTML += `<div class="manual-logs-container"><div class="logs-title">Manual Logs</div>`;
             manualLogs.forEach((logVal, index) => {
                 const currentVal = parseFloat(logVal);
                 let diffSpan = '';
                 
-                // If it's not the first log, calculate the difference
                 if (index > 0) {
                     const prevVal = parseFloat(manualLogs[index - 1]);
                     const diff = currentVal - prevVal;
@@ -309,14 +245,12 @@
                     }
                 }
                 
-                logsHTML += `
-                    <div class="log-pill">
-                        <span>$${currentVal.toFixed(2)}</span>
-                        ${diffSpan}
-                    </div>`;
+                logsHTML += `<div class="log-pill"><span>$${currentVal.toFixed(2)}</span>${diffSpan}</div>`;
             });
-            logsHTML += `</div>`;
+        } else {
+            logsHTML += `<div class="log-pill" style="color: #666; justify-content: center;">No snapshots yet</div>`;
         }
+        logsHTML += `</div>`;
 
         if (hasError) {
             card.innerHTML = `
