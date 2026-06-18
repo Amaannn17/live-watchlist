@@ -14,6 +14,7 @@
             --accent-red: #ff3d00;
             --accent-warning: #ffb300;
             --border-color: #333333;
+            --card-bg: #252525;
         }
 
         body {
@@ -30,7 +31,7 @@
 
         .dashboard-container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1200px;
             display: flex;
             flex-direction: column;
             gap: 25px;
@@ -65,18 +66,30 @@
 
         .controls {
             display: flex;
+            flex-wrap: wrap;
             gap: 15px;
             background-color: var(--surface-matte);
             padding: 20px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            align-items: center;
         }
+
+        .control-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border-right: 1px solid var(--border-color);
+            padding-right: 15px;
+        }
+
+        .control-group:last-child { border-right: none; }
 
         input, button {
             background-color: var(--bg-matte);
             color: var(--text-main);
             border: 1px solid var(--border-color);
-            padding: 12px 15px;
+            padding: 10px 15px;
             border-radius: 4px;
             outline: none;
             font-size: 1rem;
@@ -91,7 +104,7 @@
 
         .watchlist-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
             gap: 20px;
             width: 100%;
         }
@@ -117,21 +130,36 @@
         .error-text { color: var(--accent-warning); font-size: 1rem; }
         
         .log-section {
-            margin-top: 15px; font-size: 0.9rem; color: var(--text-muted);
+            margin-top: 10px; font-size: 0.9rem; color: var(--text-muted);
             border-top: 1px solid var(--border-color); padding-top: 15px; line-height: 1.6;
         }
 
-        .delete-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 0;
-            margin-left: 10px;
-            transition: color 0.2s;
+        .manual-logs-container {
+            margin-top: 10px;
+            background-color: var(--card-bg);
+            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
         }
 
+        .logs-title { font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; color: #aaa; text-transform: uppercase;}
+        
+        .log-pill {
+            display: flex;
+            justify-content: space-between;
+            background-color: var(--bg-matte);
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            border: 1px solid #2a2a2a;
+        }
+
+        .log-pill:last-child { margin-bottom: 0; }
+        
+        .diff-text { font-size: 0.85rem; font-weight: bold; }
+
+        .delete-btn { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 0; margin-left: 10px; transition: color 0.2s;}
         .delete-btn:hover { color: var(--accent-red); }
         .header-right { display: flex; align-items: center; }
         .loader { text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 40px; }
@@ -146,8 +174,14 @@
     </div>
 
     <div class="controls">
-        <input type="text" id="tickerInput" placeholder="Enter Ticker (e.g. TSLA)">
-        <button onclick="addStockToSheet()" id="addBtn">Add to Sheet</button>
+        <div class="control-group">
+            <input type="text" id="tickerInput" placeholder="Ticker (e.g. TSLA)" style="width: 140px;">
+            <button onclick="addStockToSheet()" id="addBtn">Add Stock</button>
+        </div>
+        <div class="control-group">
+            <input type="number" id="logValueInput" placeholder="Value ($)" style="width: 100px;">
+            <button onclick="addManualLog()" id="logBtn">Log Data</button>
+        </div>
     </div>
 
     <div class="watchlist-grid" id="watchlistGrid">
@@ -157,60 +191,68 @@
 
 <script>
     // Paste your Web App URL here (Must end in /exec)
-    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6ujxBp3ha-RvI9XU4BntaZwgEHG3Y8JliDQXODvo7gow_EAnxzQ3JLbX1lyw2WJ-U/exec'; 
-    
-    // Updates every 30 seconds reliably now
-    const UPDATE_INTERVAL_SECONDS = 30; 
+    const APP_SCRIPT_URL = 'YOUR_WEB_APP_LINK_HERE'; 
+    const UPDATE_INTERVAL_SECONDS = 60; 
 
-    // --- WRITE (ADD) LOGIC ---
+    // --- WRITE LOGIC (ADD STOCK) ---
     async function addStockToSheet() {
         const input = document.getElementById('tickerInput');
         const btn = document.getElementById('addBtn');
         const ticker = input.value.trim();
 
         if (!ticker) return;
-
-        btn.innerText = 'Writing...';
-        btn.disabled = true;
+        btn.innerText = 'Adding...'; btn.disabled = true;
 
         try {
             await fetch(`${APP_SCRIPT_URL}?action=add&ticker=${encodeURIComponent(ticker)}`);
-            input.value = '';
             setTimeout(fetchSheetData, 1000); 
-        } catch (error) {
-            alert("Error writing to sheet.");
-        } finally {
-            btn.innerText = 'Add to Sheet';
-            btn.disabled = false;
+        } catch (error) { alert("Error adding stock."); } 
+        finally { btn.innerText = 'Add Stock'; btn.disabled = false; }
+    }
+
+    // --- WRITE LOGIC (MANUAL LOG) ---
+    async function addManualLog() {
+        const tickerInput = document.getElementById('tickerInput');
+        const valueInput = document.getElementById('logValueInput');
+        const btn = document.getElementById('logBtn');
+        
+        const ticker = tickerInput.value.trim();
+        const logValue = valueInput.value.trim();
+
+        if (!ticker || !logValue) {
+            alert("Please enter both a Ticker and a Value to log.");
+            return;
         }
+
+        btn.innerText = 'Logging...'; btn.disabled = true;
+
+        try {
+            await fetch(`${APP_SCRIPT_URL}?action=log&ticker=${encodeURIComponent(ticker)}&value=${encodeURIComponent(logValue)}`);
+            valueInput.value = ''; // Clear value, keep ticker for rapid entry
+            setTimeout(fetchSheetData, 1000); 
+        } catch (error) { alert("Error adding log."); } 
+        finally { btn.innerText = 'Log Data'; btn.disabled = false; }
     }
 
     // --- DELETE LOGIC ---
     async function deleteStockFromSheet(ticker, btnElement) {
-        if (!confirm(`Are you sure you want to delete ${ticker} from your watchlist?`)) return;
-
-        btnElement.disabled = true;
-        btnElement.style.color = '#ff3d00'; 
+        if (!confirm(`Are you sure you want to delete ${ticker}?`)) return;
+        btnElement.disabled = true; btnElement.style.color = '#ff3d00'; 
         
         try {
             await fetch(`${APP_SCRIPT_URL}?action=delete&ticker=${encodeURIComponent(ticker)}`);
             setTimeout(fetchSheetData, 1000); 
-        } catch (error) {
-            alert("Error deleting from sheet.");
-            btnElement.disabled = false;
-        }
+        } catch (error) { alert("Error deleting."); btnElement.disabled = false; }
     }
 
-    // --- READ LOGIC (NOW USING JSON API) ---
+    // --- READ LOGIC ---
     async function fetchSheetData() {
         try {
             const response = await fetch(`${APP_SCRIPT_URL}?action=read&t=${new Date().getTime()}`);
-            if (!response.ok) throw new Error("Network response was not ok");
-            
+            if (!response.ok) throw new Error("Network error");
             const jsonData = await response.json();
             processJSON(jsonData);
         } catch (error) {
-            console.error('Fetch error:', error);
             document.getElementById('loaderText').innerText = 'Failed to connect. Check Apps Script deployment.';
         }
     }
@@ -220,44 +262,71 @@
         grid.innerHTML = ''; 
 
         if (!dataRows || dataRows.length === 0) {
-            grid.innerHTML = '<div class="loader">No stocks found in your spreadsheet.</div>';
+            grid.innerHTML = '<div class="loader">No stocks found.</div>';
             return;
         }
 
         dataRows.forEach(row => {
             const ticker = row.ticker;
-            // Convert to string safely
             const rawPrice = (row.price || '').toString();
             const rawInvested = (row.invested || '').toString();
             const rawHistorical = (row.historical || '').toString();
             const rawPnl = (row.pnl || '').toString();
+            const manualLogs = row.manualLogs || [];
 
             const hasError = [rawPrice, rawInvested, rawHistorical, rawPnl].some(val => 
                 val.includes('#N/A') || val.includes('#VALUE!') || val.includes('#REF!')
             );
 
-            createOrUpdateCard(ticker, rawPrice, rawInvested, rawHistorical, rawPnl, hasError);
+            createOrUpdateCard(ticker, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, hasError);
         });
     }
 
-    function createOrUpdateCard(ticker, rawPrice, rawInvested, rawHistorical, rawPnl, hasError) {
+    function createOrUpdateCard(ticker, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, hasError) {
         const grid = document.getElementById('watchlistGrid');
         const card = document.createElement('div');
         card.className = 'stock-card';
         
         const deleteHTML = `<button class="delete-btn" onclick="deleteStockFromSheet('${ticker}', this)" title="Delete ${ticker}">✖</button>`;
 
+        // Generate the HTML for the Manual Logs timeline
+        let logsHTML = '';
+        if (manualLogs.length > 0) {
+            logsHTML += `<div class="manual-logs-container"><div class="logs-title">Manual Logs</div>`;
+            manualLogs.forEach((logVal, index) => {
+                const currentVal = parseFloat(logVal);
+                let diffSpan = '';
+                
+                // If it's not the first log, calculate the difference
+                if (index > 0) {
+                    const prevVal = parseFloat(manualLogs[index - 1]);
+                    const diff = currentVal - prevVal;
+                    if (!isNaN(diff)) {
+                        const isPos = diff >= 0;
+                        const sign = isPos ? '+' : '';
+                        const colorClass = isPos ? 'positive' : 'negative';
+                        diffSpan = `<span class="diff-text ${colorClass}">(${sign}$${Math.abs(diff).toFixed(2)})</span>`;
+                    }
+                }
+                
+                logsHTML += `
+                    <div class="log-pill">
+                        <span>$${currentVal.toFixed(2)}</span>
+                        ${diffSpan}
+                    </div>`;
+            });
+            logsHTML += `</div>`;
+        }
+
         if (hasError) {
             card.innerHTML = `
                 <div class="card-header">
                     <span>${ticker}</span>
-                    <div class="header-right">
-                        <span style="font-size:0.8rem; color:var(--accent-warning);">Loading...</span>
-                        ${deleteHTML}
-                    </div>
+                    <div class="header-right"><span style="font-size:0.8rem; color:var(--accent-warning);">Loading...</span>${deleteHTML}</div>
                 </div>
                 <div class="price error-text" style="font-size: 1.5rem;">Connecting...</div>
-                <div class="pnl error-text">Awaiting data from exchange</div>
+                <div class="pnl error-text">Awaiting data</div>
+                ${logsHTML}
             `;
         } else {
             const livePrice = parseFloat(rawPrice.replace(/[^0-9.-]+/g,""));       
@@ -275,26 +344,22 @@
                 pnlClass = isPositive ? 'positive' : 'negative';
                 safePnl = `${isPositive ? '+' : '-'}$${Math.abs(profitLoss).toFixed(2)}`;
             }
-
             const safeHistorical = isNaN(historicalPrice) ? '...' : `$${historicalPrice.toFixed(2)}`;
 
             card.innerHTML = `
                 <div class="card-header">
                     <span>${ticker}</span>
-                    <div class="header-right">
-                        <span style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">Live</span>
-                        ${deleteHTML}
-                    </div>
+                    <div class="header-right"><span style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">Live</span>${deleteHTML}</div>
                 </div>
                 <div class="price">${safePrice}</div>
                 <div class="pnl ${pnlClass}">P&L ($${safeInvested}): ${safePnl}</div>
                 <div class="log-section">Initial Price (1M Ago): ${safeHistorical}</div>
+                ${logsHTML}
             `;
         }
         grid.appendChild(card);
     }
 
-    // Start App
     fetchSheetData(); 
     setInterval(fetchSheetData, UPDATE_INTERVAL_SECONDS * 1000);
 </script>
