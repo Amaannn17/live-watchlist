@@ -6,119 +6,52 @@
     <title>Live Market Watchlist</title>
     <style>
         :root {
-            --bg-matte: #121212;
-            --surface-matte: #1e1e1e;
-            --text-main: #e0e0e0;
-            --text-muted: #888888;
-            --accent-green: #00c853;
-            --accent-red: #ff3d00;
-            --accent-warning: #ffb300;
-            --border-color: #333333;
-            --card-bg: #252525;
+            --bg-matte: #121212; --surface-matte: #1e1e1e; --text-main: #e0e0e0;
+            --text-muted: #888888; --accent-green: #00c853; --accent-red: #ff3d00;
+            --accent-warning: #ffb300; --border-color: #333333; --card-bg: #252525;
         }
 
-        body {
-            background-color: var(--bg-matte);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .dashboard-container {
-            width: 100%;
-            max-width: 1200px;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        .header-panel {
-            background-color: var(--surface-matte);
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
+        body { background-color: var(--bg-matte); color: var(--text-main); font-family: -apple-system, sans-serif; margin: 0; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .dashboard-container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 25px; }
+        
+        .header-panel { background-color: var(--surface-matte); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         h1 { margin: 0; font-size: 1.2rem; font-weight: 500; color: var(--text-muted); }
-
         .status-indicator { font-size: 0.9rem; color: var(--accent-green); display: flex; align-items: center; gap: 8px; }
         .dot { height: 8px; width: 8px; background-color: var(--accent-green); border-radius: 50%; box-shadow: 0 0 8px var(--accent-green); }
-        .sync-flash { animation: pulse 1.5s ease-out; }
         
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(0, 200, 83, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
-        }
+        .sync-flash { animation: pulse 1.5s ease-out; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0,200,83,0.7); } 70% { box-shadow: 0 0 0 10px rgba(0,200,83,0); } 100% { box-shadow: 0 0 0 0 rgba(0,200,83,0); } }
 
-        .controls {
-            display: flex; gap: 15px; background-color: var(--surface-matte); padding: 20px;
-            border-radius: 8px; border: 1px solid var(--border-color); align-items: center;
-        }
-
-        input, button {
-            background-color: var(--bg-matte); color: var(--text-main); border: 1px solid var(--border-color);
-            padding: 10px 15px; border-radius: 4px; outline: none; font-size: 1rem;
-        }
-
+        .controls { display: flex; gap: 15px; background-color: var(--surface-matte); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); align-items: center; }
+        input, button { background-color: var(--bg-matte); color: var(--text-main); border: 1px solid var(--border-color); padding: 10px 15px; border-radius: 4px; outline: none; font-size: 1rem; }
         button { cursor: pointer; background-color: #333333; font-weight: bold; transition: background 0.2s; }
         button:hover { background-color: #444444; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .watchlist-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; width: 100%;
-        }
-
-        .stock-card {
-            background-color: var(--surface-matte); border: 1px solid var(--border-color);
-            border-radius: 8px; padding: 25px; display: flex; flex-direction: column;
-            gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative;
-        }
-
+        .watchlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; width: 100%; }
+        .stock-card { background-color: var(--surface-matte); border: 1px solid var(--border-color); border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; }
+        
         .card-header { display: flex; justify-content: space-between; align-items: center; font-size: 1.4rem; font-weight: bold; }
         .price { font-size: 2.2rem; font-weight: 300; letter-spacing: -0.5px; }
         .pnl { font-size: 1rem; font-weight: 500; }
         
-        .positive { color: var(--accent-green); }
-        .negative { color: var(--accent-red); }
-        .error-text { color: var(--accent-warning); font-size: 1rem; }
-        
+        .positive { color: var(--accent-green); } .negative { color: var(--accent-red); } .error-text { color: var(--accent-warning); font-size: 1rem; }
         .log-section { margin-top: 5px; font-size: 0.9rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 15px; }
 
-        .manual-logs-container {
-            margin-top: 10px; background-color: var(--card-bg); border-radius: 6px; padding: 12px; border: 1px solid var(--border-color);
-        }
-
+        .manual-logs-container { margin-top: 10px; background-color: var(--card-bg); border-radius: 6px; padding: 12px; border: 1px solid var(--border-color); }
         .logs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .logs-title { font-size: 0.8rem; font-weight: bold; color: #aaa; text-transform: uppercase; }
         
-        .snapshot-btn {
-            background-color: var(--bg-matte); border: 1px solid var(--border-color); color: var(--text-main);
-            font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; font-weight: normal; cursor: pointer;
-        }
-
+        .snapshot-btn { background-color: var(--bg-matte); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
         .snapshot-btn:hover { border-color: var(--accent-green); color: var(--accent-green); }
         
-        .log-pill {
-            display: flex; flex-direction: column; gap: 4px; background-color: var(--bg-matte);
-            padding: 8px 10px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #2a2a2a;
-        }
-
+        .log-pill { display: flex; flex-direction: column; gap: 4px; background-color: var(--bg-matte); padding: 8px 10px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #2a2a2a; }
         .log-pill-top { display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
         .log-pill-bottom { font-size: 0.75rem; color: #888; }
-        
         .log-pill:last-child { margin-bottom: 0; }
+        
         .diff-text { font-size: 0.85rem; font-weight: bold; }
         .baseline-badge { background: var(--accent-green); color: #000; padding: 2px 5px; border-radius: 3px; font-size: 0.6rem; margin-left: 6px; font-weight: bold; letter-spacing: 0.5px;}
-
         .delete-btn { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 0; margin-left: 10px; transition: color 0.2s; }
         .delete-btn:hover { color: var(--accent-red); }
         .header-right { display: flex; align-items: center; }
@@ -147,11 +80,10 @@
     const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6ujxBp3ha-RvI9XU4BntaZwgEHG3Y8JliDQXODvo7gow_EAnxzQ3JLbX1lyw2WJ-U/exec'; 
     const UPDATE_INTERVAL_SECONDS = 30; 
 
-    // Visual feedback for background polling
     function triggerSyncPulse() {
         const dot = document.getElementById('syncDot');
         dot.classList.remove('sync-flash');
-        void dot.offsetWidth; // Trigger reflow
+        void dot.offsetWidth; 
         dot.classList.add('sync-flash');
     }
 
@@ -159,10 +91,9 @@
         const input = document.getElementById('tickerInput');
         const btn = document.getElementById('addBtn');
         const ticker = input.value.trim();
-
         if (!ticker) return;
+        
         btn.innerText = 'Adding...'; btn.disabled = true;
-
         try {
             await fetch(`${APP_SCRIPT_URL}?action=add&ticker=${encodeURIComponent(ticker)}`);
             input.value = '';
@@ -172,23 +103,18 @@
     }
 
     async function logCurrentPrice(ticker, btnElement) {
-        btnElement.innerText = 'Saving...'; 
-        btnElement.disabled = true;
-
+        btnElement.innerText = 'Saving...'; btnElement.disabled = true;
         try {
             await fetch(`${APP_SCRIPT_URL}?action=log&ticker=${encodeURIComponent(ticker)}`);
             setTimeout(fetchSheetData, 1000); 
         } catch (error) { 
-            alert("Error logging price."); 
-            btnElement.innerText = 'Snapshot'; 
-            btnElement.disabled = false; 
+            alert("Error logging price."); btnElement.innerText = 'Snapshot'; btnElement.disabled = false; 
         }
     }
 
     async function deleteStockFromSheet(ticker, btnElement) {
         if (!confirm(`Are you sure you want to delete ${ticker}?`)) return;
         btnElement.disabled = true; btnElement.style.color = '#ff3d00'; 
-        
         try {
             await fetch(`${APP_SCRIPT_URL}?action=delete&ticker=${encodeURIComponent(ticker)}`);
             setTimeout(fetchSheetData, 1000); 
@@ -203,22 +129,18 @@
             const jsonData = await response.json();
             processJSON(jsonData);
         } catch (error) {
-            console.error(error);
             const loader = document.getElementById('loaderText');
             if(loader) loader.innerText = 'Failed to connect. Retrying...';
         }
     }
 
-    // --- OPTIMIZED RENDER ENGINE (DOM DIFFING) ---
     function processJSON(dataRows) {
         const grid = document.getElementById('watchlistGrid');
-        
         if (!dataRows || dataRows.length === 0) {
             grid.innerHTML = '<div class="loader" id="loaderText">No stocks found.</div>';
             return;
         }
 
-        // Remove the loading text safely if it exists
         const loader = document.getElementById('loaderText');
         if (loader) loader.remove();
 
@@ -226,7 +148,6 @@
 
         dataRows.forEach(row => {
             const ticker = row.ticker;
-            // Create a CSS-safe ID for the card
             const safeTickerId = ticker.replace(/[^a-zA-Z0-9]/g, '-'); 
             activeTickers.add(safeTickerId);
 
@@ -243,13 +164,10 @@
             createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, hasError);
         });
 
-        // Cleanup: Remove any cards from the screen that were deleted from the spreadsheet
         Array.from(grid.children).forEach(child => {
             if (child.classList.contains('stock-card')) {
                 const childId = child.id.replace('card-', '');
-                if (!activeTickers.has(childId)) {
-                    grid.removeChild(child);
-                }
+                if (!activeTickers.has(childId)) grid.removeChild(child);
             }
         });
     }
@@ -259,7 +177,6 @@
         let card = document.getElementById(`card-${safeTickerId}`);
         let isNewCard = false;
 
-        // If card doesn't exist, create the shell
         if (!card) {
             card = document.createElement('div');
             card.className = 'stock-card';
@@ -310,25 +227,28 @@
         logsHTML += `</div>`;
 
         let newInnerHTML = '';
+        const invested = parseFloat(rawInvested.replace(/[^0-9.-]+/g,""));        
+        const safeInvested = isNaN(invested) ? '100.00' : invested.toFixed(2);
 
         if (hasError) {
+            // Error State: explicitly hardcodes the P&L ($100.00) label to never vanish
             newInnerHTML = `
                 <div class="card-header">
                     <span>${ticker}</span>
                     <div class="header-right"><span style="font-size:0.8rem; color:var(--accent-warning);">Loading...</span>${deleteHTML}</div>
                 </div>
                 <div class="price error-text" style="font-size: 1.5rem;">Connecting...</div>
-                <div class="pnl error-text">Awaiting data</div>
+                <div class="pnl error-text">P&L ($${safeInvested}): Awaiting data</div>
+                <div class="log-section" style="color:var(--accent-warning);">Auto-Repairing old spreadsheet formulas...</div>
                 ${logsHTML}
             `;
         } else {
+            // Normal State
             const livePrice = parseFloat(rawPrice.replace(/[^0-9.-]+/g,""));       
-            const invested = parseFloat(rawInvested.replace(/[^0-9.-]+/g,""));        
             const historicalPrice = parseFloat(rawHistorical.replace(/[^0-9.-]+/g,"")); 
             const profitLoss = parseFloat(rawPnl.replace(/[^0-9.-]+/g,""));    
 
             const safePrice = isNaN(livePrice) ? '<span style="font-size: 1.5rem; color: #888;">Updating...</span>' : `$${livePrice.toFixed(2)}`;
-            const safeInvested = isNaN(invested) ? '100.00' : invested.toFixed(2);
             
             let safePnl = '...';
             let pnlClass = '';
@@ -346,22 +266,15 @@
                 </div>
                 <div class="price">${safePrice}</div>
                 <div class="pnl ${pnlClass}">P&L ($${safeInvested}): ${safePnl}</div>
-                <div class="log-section">Initial Price (1M Ago): ${safeHistorical}</div>
+                <div class="log-section">Initial Price (Baseline): ${safeHistorical}</div>
                 ${logsHTML}
             `;
         }
 
-        // Only inject HTML if something actually changed (Prevents UI flickering)
-        if (card.innerHTML !== newInnerHTML) {
-            card.innerHTML = newInnerHTML;
-        }
-
-        if (isNewCard) {
-            grid.appendChild(card);
-        }
+        if (card.innerHTML !== newInnerHTML) card.innerHTML = newInnerHTML;
+        if (isNewCard) grid.appendChild(card);
     }
 
-    // Start App & Interval
     fetchSheetData(); 
     setInterval(fetchSheetData, UPDATE_INTERVAL_SECONDS * 1000);
 </script>
