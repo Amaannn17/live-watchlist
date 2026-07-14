@@ -63,7 +63,7 @@
 <div class="dashboard-container">
     <div class="header-panel">
         <h1>Live Market Dashboard</h1>
-        <div class="status-indicator"><span class="dot" id="syncDot"></span> Active (30s Polling)</div>
+        <div class="status-indicator"><span class="dot" id="syncDot"></span> Active (10s Polling)</div>
     </div>
 
     <div class="controls">
@@ -78,7 +78,7 @@
 
 <script>
     const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6ujxBp3ha-RvI9XU4BntaZwgEHG3Y8JliDQXODvo7gow_EAnxzQ3JLbX1lyw2WJ-U/exec'; 
-    const UPDATE_INTERVAL_SECONDS = 30; 
+    const UPDATE_INTERVAL_SECONDS = 10;
 
     function triggerSyncPulse() {
         const dot = document.getElementById('syncDot');
