@@ -1,0 +1,3 @@
+## 2024-05-18 - innerHTML Serialization Defeats Equality Checks
+**Learning:** Checking `element.innerHTML !== newHTMLString` to avoid unnecessary DOM updates during polling loops often fails because the browser immediately parses and reserializes `innerHTML` on assignment. The resulting serialized string often differs slightly from the raw template literal (e.g., attribute ordering, quote normalization), causing the equality check to be false even when data hasn't changed.
+**Action:** Always cache the raw HTML string being assigned (e.g., in a custom data attribute like `element.dataset.rawHtml`) and compare against the cache instead of `innerHTML`.
