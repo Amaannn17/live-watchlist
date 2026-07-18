@@ -1,0 +1,3 @@
+## 2024-07-18 - Avoid innerHTML string comparison in polling cycles
+**Learning:** Comparing `innerHTML` with raw HTML strings is unreliable because the browser normalizes the HTML (e.g. converting attributes to lower case, reordering them, quoting them differently). In an application that polls data on an interval, this leads to the comparison constantly failing, resulting in expensive and redundant DOM repaints even when the raw data hasn't changed.
+**Action:** When manually updating DOM strings (instead of using a framework like React), cache the raw string output on the DOM node itself (e.g., `el._rawHtml`) and use that for comparison. This guarantees exact match checks and avoids the normalization side-effect.
