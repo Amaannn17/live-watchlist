@@ -1,0 +1,3 @@
+## 2024-05-17 - Avoid `innerHTML` equality checks for performance caching
+**Learning:** Checking `element.innerHTML !== newInnerHTML` is unreliable and can trigger unnecessary DOM updates. Browsers normalize HTML strings when they are assigned to `innerHTML` (e.g., reordering attributes, modifying quotes, normalizing whitespace), which means the retrieved `innerHTML` might not exactly match the originally assigned raw string even if the content is functionally identical.
+**Action:** When implementing polling mechanisms or custom rendering loops that need to prevent redundant DOM updates, cache the original raw HTML string in a custom property on the DOM element (like `element._rawHtml = newInnerHTML`) and use that for equality checks instead of reading `.innerHTML`.
