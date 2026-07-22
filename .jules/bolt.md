@@ -1,0 +1,3 @@
+## 2024-05-24 - Unreliable DOM updates via innerHTML string equality in vanilla JS polling
+**Learning:** Polling mechanisms updating the DOM via `innerHTML` can trigger unnecessary reflows and updates even if the apparent logic hasn't changed. Comparing `element.innerHTML === newHtmlString` is surprisingly unreliable due to browser normalization of attributes and tags.
+**Action:** When manually managing DOM updates in a vanilla JS render cycle (without a virtual DOM), cache the generated raw HTML string in a custom property on the element (e.g., `element._rawHtml`) and compare against that instead, to reliably avoid redundant updates.
