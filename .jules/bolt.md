@@ -1,0 +1,3 @@
+## 2026-10-23 - Avoid innerHTML string equality checks for performance
+**Learning:** Checking `innerHTML` for string equality (e.g., `card.innerHTML !== newInnerHTML`) is unreliable and performatively expensive. Browsers normalize HTML tags, which can result in false negatives and trigger unnecessary, expensive DOM updates, particularly problematic during polling mechanisms where the same content is fetched repeatedly.
+**Action:** Use a custom object property (e.g., `card._rawHtml`) to cache and check the generated raw HTML string *before* assigning it to `innerHTML`. This bypasses browser parsing and provides a reliable, fast equality check, significantly reducing redundant DOM operations.
