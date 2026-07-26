@@ -1,0 +1,3 @@
+## 2024-05-15 - Unreliable innerHTML Equality Checks
+**Learning:** Reading `innerHTML` for equality checks during polling is unreliable and costly, as browser parsing can subtly change the string representation, causing unnecessary DOM updates even when data hasn't changed. Storing raw data in `dataset` attributes can also bloat DOM nodes with massive data attributes.
+**Action:** Use a custom property (e.g., `_rawHtml`) on the DOM element to cache the generated raw HTML string and use it for equality checks to prevent unnecessary re-renders.
