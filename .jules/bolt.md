@@ -1,0 +1,3 @@
+## 2024-03-05 - Optimize DOM updates in polling cycle
+**Learning:** Checking `card.innerHTML !== newInnerHTML` in a 30-second polling cycle causes an expensive DOM serialization on every iteration for every card, even when data hasn't changed.
+**Action:** Use a custom property `_rawHtml` on the DOM node to cache the string value (e.g. `card._rawHtml = newInnerHTML`) to avoid the expensive `.innerHTML` getter, making string comparisons extremely fast.
