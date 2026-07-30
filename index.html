@@ -271,7 +271,13 @@
             `;
         }
 
-        if (card.innerHTML !== newInnerHTML) card.innerHTML = newInnerHTML;
+        // ⚡ Bolt: Cache raw HTML string on the element to avoid expensive and unreliable
+        // innerHTML string serialization equality checks during every 30s polling cycle.
+        // Reduces redundant DOM parsing and layout recalculations for unchanged data.
+        if (card._rawHtml !== newInnerHTML) {
+            card.innerHTML = newInnerHTML;
+            card._rawHtml = newInnerHTML;
+        }
         if (isNewCard) grid.appendChild(card);
     }
 
