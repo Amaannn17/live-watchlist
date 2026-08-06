@@ -8,7 +8,7 @@
         :root {
             --bg-matte: #121212; --surface-matte: #1e1e1e; --text-main: #e0e0e0;
             --text-muted: #888888; --accent-green: #00c853; --accent-red: #ff3d00;
-            --accent-warning: #ffb300; --border-color: #333333; --card-bg: #252525;
+            --accent-warning: #ffb300; --accent-blue: #64b5f6; --border-color: #333333; --card-bg: #252525;
         }
 
         body { background-color: var(--bg-matte); color: var(--text-main); font-family: -apple-system, sans-serif; margin: 0; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
@@ -53,9 +53,12 @@
         .diff-text { font-size: 0.85rem; font-weight: bold; }
         .baseline-badge { background: var(--accent-green); color: #000; padding: 2px 5px; border-radius: 3px; font-size: 0.6rem; margin-left: 6px; font-weight: bold; letter-spacing: 0.5px;}
         
-        /* NEW NOTE CSS */
+        /* NEW DYNAMIC NOTE CSS */
         .note-toggle { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; margin-top: 5px; padding: 5px 0; text-align: left; transition: color 0.2s;}
         .note-toggle:hover { color: var(--text-main); }
+        .note-toggle.has-note { color: var(--accent-blue); font-weight: 500; }
+        .note-toggle.has-note:hover { color: #90caf9; }
+
         .note-container { display: none; margin-top: 5px; background-color: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); flex-direction: column; gap: 10px; }
         .note-container.active { display: flex; }
         .note-textarea { width: 100%; height: 70px; background-color: var(--bg-matte); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px; padding: 8px; font-family: inherit; resize: vertical; box-sizing: border-box; }
@@ -131,7 +134,6 @@
         } catch (error) { alert("Error deleting."); btnElement.disabled = false; }
     }
 
-    // --- NEW: UI Logic for Notes ---
     function toggleNote(tickerId) {
         const container = document.getElementById(`note-container-${tickerId}`);
         container.classList.toggle('active');
@@ -145,7 +147,11 @@
         try {
             await fetch(`${APP_SCRIPT_URL}?action=savenote&ticker=${encodeURIComponent(ticker)}&note=${encodeURIComponent(noteText)}`);
             btnElement.innerText = 'Saved!';
-            setTimeout(() => { btnElement.innerText = 'Save Note'; btnElement.disabled = false; }, 2000);
+            setTimeout(() => { 
+                btnElement.innerText = 'Save Note'; 
+                btnElement.disabled = false;
+                fetchSheetData(); // Pull the fresh data to update the button's dynamic state
+            }, 1000);
         } catch (error) { 
             alert("Error saving note."); btnElement.innerText = 'Save Note'; btnElement.disabled = false; 
         }
@@ -181,10 +187,8 @@
             const safeTickerId = ticker.replace(/[^a-zA-Z0-9]/g, '-'); 
             activeTickers.add(safeTickerId);
 
-            // CRITICAL: Check if user is currently typing in the note field for this specific card
             const existingTextarea = document.getElementById(`note-input-${safeTickerId}`);
             if (existingTextarea && document.activeElement === existingTextarea) {
-                // User is actively typing, skip updating this card so we don't erase their work!
                 return; 
             }
 
@@ -215,7 +219,6 @@
         let card = document.getElementById(`card-${safeTickerId}`);
         let isNewCard = false;
 
-        // Persist the dropdown open/close state during background refresh
         let isNoteOpen = false;
         if (card) {
             const existingContainer = document.getElementById(`note-container-${safeTickerId}`);
@@ -271,11 +274,15 @@
         }
         logsHTML += `</div>`;
 
-        // The Dropdown Note HTML
+        // Check if note has text to determine button styling
+        const hasNoteText = userNote.trim() !== '';
         const noteActive = isNoteOpen ? 'active' : '';
+        const noteToggleClass = hasNoteText ? 'note-toggle has-note' : 'note-toggle';
+        const noteToggleText = hasNoteText ? '📝 View Note' : '✎ Add Note';
+
         const noteHTML = `
-            <button class="note-toggle" onclick="toggleNote('${safeTickerId}')">
-                ✎ Add / Edit Note
+            <button class="${noteToggleClass}" onclick="toggleNote('${safeTickerId}')">
+                ${noteToggleText}
             </button>
             <div class="note-container ${noteActive}" id="note-container-${safeTickerId}">
                 <textarea class="note-textarea" id="note-input-${safeTickerId}" placeholder="Type your notes for ${ticker} here...">${userNote}</textarea>
@@ -328,7 +335,6 @@
             `;
         }
 
-        // Only inject HTML if something actually changed (Prevents UI flickering)
         if (card.innerHTML !== newInnerHTML) card.innerHTML = newInnerHTML;
         if (isNewCard) grid.appendChild(card);
     }
