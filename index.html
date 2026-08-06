@@ -52,6 +52,16 @@
         
         .diff-text { font-size: 0.85rem; font-weight: bold; }
         .baseline-badge { background: var(--accent-green); color: #000; padding: 2px 5px; border-radius: 3px; font-size: 0.6rem; margin-left: 6px; font-weight: bold; letter-spacing: 0.5px;}
+        
+        /* NEW NOTE CSS */
+        .note-toggle { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; margin-top: 5px; padding: 5px 0; text-align: left; transition: color 0.2s;}
+        .note-toggle:hover { color: var(--text-main); }
+        .note-container { display: none; margin-top: 5px; background-color: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); flex-direction: column; gap: 10px; }
+        .note-container.active { display: flex; }
+        .note-textarea { width: 100%; height: 70px; background-color: var(--bg-matte); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px; padding: 8px; font-family: inherit; resize: vertical; box-sizing: border-box; }
+        .note-save-btn { align-self: flex-end; background-color: #333; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold; }
+        .note-save-btn:hover { background-color: var(--accent-green); color: black; }
+
         .delete-btn { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 0; margin-left: 10px; transition: color 0.2s; }
         .delete-btn:hover { color: var(--accent-red); }
         .header-right { display: flex; align-items: center; }
@@ -121,6 +131,26 @@
         } catch (error) { alert("Error deleting."); btnElement.disabled = false; }
     }
 
+    // --- NEW: UI Logic for Notes ---
+    function toggleNote(tickerId) {
+        const container = document.getElementById(`note-container-${tickerId}`);
+        container.classList.toggle('active');
+    }
+
+    async function saveNote(ticker, safeTickerId, btnElement) {
+        const textarea = document.getElementById(`note-input-${safeTickerId}`);
+        const noteText = textarea.value;
+        
+        btnElement.innerText = 'Saving...'; btnElement.disabled = true;
+        try {
+            await fetch(`${APP_SCRIPT_URL}?action=savenote&ticker=${encodeURIComponent(ticker)}&note=${encodeURIComponent(noteText)}`);
+            btnElement.innerText = 'Saved!';
+            setTimeout(() => { btnElement.innerText = 'Save Note'; btnElement.disabled = false; }, 2000);
+        } catch (error) { 
+            alert("Error saving note."); btnElement.innerText = 'Save Note'; btnElement.disabled = false; 
+        }
+    }
+
     async function fetchSheetData() {
         try {
             triggerSyncPulse();
@@ -151,17 +181,25 @@
             const safeTickerId = ticker.replace(/[^a-zA-Z0-9]/g, '-'); 
             activeTickers.add(safeTickerId);
 
+            // CRITICAL: Check if user is currently typing in the note field for this specific card
+            const existingTextarea = document.getElementById(`note-input-${safeTickerId}`);
+            if (existingTextarea && document.activeElement === existingTextarea) {
+                // User is actively typing, skip updating this card so we don't erase their work!
+                return; 
+            }
+
             const rawPrice = (row.price || '').toString();
             const rawInvested = (row.invested || '').toString();
             const rawHistorical = (row.historical || '').toString();
             const rawPnl = (row.pnl || '').toString();
             const manualLogs = row.manualLogs || [];
+            const userNote = row.note || '';
 
             const hasError = [rawPrice, rawInvested, rawHistorical, rawPnl].some(val => 
                 val.includes('#N/A') || val.includes('#VALUE!') || val.includes('#REF!')
             );
 
-            createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, hasError);
+            createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError);
         });
 
         Array.from(grid.children).forEach(child => {
@@ -172,12 +210,19 @@
         });
     }
 
-    function createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, hasError) {
+    function createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError) {
         const grid = document.getElementById('watchlistGrid');
         let card = document.getElementById(`card-${safeTickerId}`);
         let isNewCard = false;
 
-        if (!card) {
+        // Persist the dropdown open/close state during background refresh
+        let isNoteOpen = false;
+        if (card) {
+            const existingContainer = document.getElementById(`note-container-${safeTickerId}`);
+            if (existingContainer && existingContainer.classList.contains('active')) {
+                isNoteOpen = true;
+            }
+        } else {
             card = document.createElement('div');
             card.className = 'stock-card';
             card.id = `card-${safeTickerId}`;
@@ -226,12 +271,23 @@
         }
         logsHTML += `</div>`;
 
+        // The Dropdown Note HTML
+        const noteActive = isNoteOpen ? 'active' : '';
+        const noteHTML = `
+            <button class="note-toggle" onclick="toggleNote('${safeTickerId}')">
+                ✎ Add / Edit Note
+            </button>
+            <div class="note-container ${noteActive}" id="note-container-${safeTickerId}">
+                <textarea class="note-textarea" id="note-input-${safeTickerId}" placeholder="Type your notes for ${ticker} here...">${userNote}</textarea>
+                <button class="note-save-btn" onclick="saveNote('${ticker}', '${safeTickerId}', this)">Save Note</button>
+            </div>
+        `;
+
         let newInnerHTML = '';
         const invested = parseFloat(rawInvested.replace(/[^0-9.-]+/g,""));        
         const safeInvested = isNaN(invested) ? '100.00' : invested.toFixed(2);
 
         if (hasError) {
-            // Error State: explicitly hardcodes the P&L ($100.00) label to never vanish
             newInnerHTML = `
                 <div class="card-header">
                     <span>${ticker}</span>
@@ -241,9 +297,9 @@
                 <div class="pnl error-text">P&L ($${safeInvested}): Awaiting data</div>
                 <div class="log-section" style="color:var(--accent-warning);">Auto-Repairing old spreadsheet formulas...</div>
                 ${logsHTML}
+                ${noteHTML}
             `;
         } else {
-            // Normal State
             const livePrice = parseFloat(rawPrice.replace(/[^0-9.-]+/g,""));       
             const historicalPrice = parseFloat(rawHistorical.replace(/[^0-9.-]+/g,"")); 
             const profitLoss = parseFloat(rawPnl.replace(/[^0-9.-]+/g,""));    
@@ -268,16 +324,12 @@
                 <div class="pnl ${pnlClass}">P&L ($${safeInvested}): ${safePnl}</div>
                 <div class="log-section">Initial Price (Baseline): ${safeHistorical}</div>
                 ${logsHTML}
+                ${noteHTML}
             `;
         }
 
-        // ⚡ Bolt: Cache raw HTML string on the element to avoid expensive and unreliable
-        // innerHTML string serialization equality checks during every 30s polling cycle.
-        // Reduces redundant DOM parsing and layout recalculations for unchanged data.
-        if (card._rawHtml !== newInnerHTML) {
-            card.innerHTML = newInnerHTML;
-            card._rawHtml = newInnerHTML;
-        }
+        // Only inject HTML if something actually changed (Prevents UI flickering)
+        if (card.innerHTML !== newInnerHTML) card.innerHTML = newInnerHTML;
         if (isNewCard) grid.appendChild(card);
     }
 
