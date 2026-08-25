@@ -157,7 +157,7 @@
         }
     }
 
-    let lastRawResponse = null;
+    let lastResponseText = null;
 
     async function fetchSheetData() {
         try {
@@ -165,16 +165,14 @@
             const response = await fetch(`${APP_SCRIPT_URL}?action=read&t=${new Date().getTime()}`);
             if (!response.ok) throw new Error("Network error");
 
-            // ⚡ Bolt: Cache raw response to avoid parsing and DOM updates if data hasn't changed
-            const rawText = await response.text();
-            if (rawText === lastRawResponse) return;
-            lastRawResponse = rawText;
+            const responseText = await response.text();
+            if (responseText === lastResponseText) return; // Skip redundant JSON.parse and DOM updates
+            lastResponseText = responseText;
 
-            const jsonData = JSON.parse(rawText);
+            const jsonData = JSON.parse(responseText);
             processJSON(jsonData);
         } catch (error) {
-            // Clear cache on error for proper recovery
-            lastRawResponse = null;
+            lastResponseText = null; // Clear cache on error
             const loader = document.getElementById('loaderText');
             if(loader) loader.innerText = 'Failed to connect. Retrying...';
         }
@@ -345,10 +343,9 @@
             `;
         }
 
-        // ⚡ Bolt: Cache generated raw HTML to prevent unreliable innerHTML comparisons
         if (card._rawHtml !== newInnerHTML) {
-            card._rawHtml = newInnerHTML;
             card.innerHTML = newInnerHTML;
+            card._rawHtml = newInnerHTML;
         }
         if (isNewCard) grid.appendChild(card);
     }
