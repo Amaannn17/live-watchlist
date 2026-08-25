@@ -213,7 +213,10 @@
                 val.includes('#N/A') || val.includes('#VALUE!') || val.includes('#REF!')
             );
 
-            createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError);
+            // ⚡ Bolt: Generate a lightweight data signature to detect changes
+            const rowSignature = JSON.stringify([rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError]);
+
+            createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError, rowSignature);
         });
 
         Array.from(grid.children).forEach(child => {
@@ -224,7 +227,7 @@
         });
     }
 
-    function createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError) {
+    function createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError, rowSignature) {
         const grid = document.getElementById('watchlistGrid');
         let card = document.getElementById(`card-${safeTickerId}`);
         let isNewCard = false;
@@ -235,10 +238,18 @@
             if (existingContainer && existingContainer.classList.contains('active')) {
                 isNoteOpen = true;
             }
+
+            // ⚡ Bolt: Return early if data and UI state haven't changed to avoid string generation
+            const currentSignature = rowSignature + '|' + isNoteOpen;
+            if (card._rowSignature === currentSignature) {
+                return;
+            }
+            card._rowSignature = currentSignature;
         } else {
             card = document.createElement('div');
             card.className = 'stock-card';
             card.id = `card-${safeTickerId}`;
+            card._rowSignature = rowSignature + '|false';
             isNewCard = true;
         }
 
