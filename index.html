@@ -202,6 +202,13 @@
                 return;
             }
 
+            // ⚡ Bolt: Data-level memoization to bypass expensive HTML generation for unchanged data
+            const rowSignature = JSON.stringify(row);
+            let card = document.getElementById(`card-${safeTickerId}`);
+            if (card && card._rowSignature === rowSignature) {
+                return;
+            }
+
             const rawPrice = (row.price || '').toString();
             const rawInvested = (row.invested || '').toString();
             const rawHistorical = (row.historical || '').toString();
@@ -214,6 +221,9 @@
             );
 
             createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError);
+
+            card = document.getElementById(`card-${safeTickerId}`);
+            if (card) card._rowSignature = rowSignature;
         });
 
         Array.from(grid.children).forEach(child => {
