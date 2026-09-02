@@ -202,6 +202,13 @@
                 return;
             }
 
+            // ⚡ Bolt: Data-level memoization to bypass HTML string generation entirely for unchanged data
+            const rowSignature = JSON.stringify(row);
+            const cardElement = document.getElementById(`card-${safeTickerId}`);
+            if (cardElement && cardElement._rowSignature === rowSignature) {
+                return;
+            }
+
             const rawPrice = (row.price || '').toString();
             const rawInvested = (row.invested || '').toString();
             const rawHistorical = (row.historical || '').toString();
@@ -213,7 +220,7 @@
                 val.includes('#N/A') || val.includes('#VALUE!') || val.includes('#REF!')
             );
 
-            createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError);
+            createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError, rowSignature);
         });
 
         Array.from(grid.children).forEach(child => {
@@ -224,7 +231,7 @@
         });
     }
 
-    function createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError) {
+    function createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError, rowSignature) {
         const grid = document.getElementById('watchlistGrid');
         let card = document.getElementById(`card-${safeTickerId}`);
         let isNewCard = false;
@@ -350,6 +357,8 @@
             card._rawHtml = newInnerHTML;
             card.innerHTML = newInnerHTML;
         }
+        // ⚡ Bolt: Store data signature on the element for early bailout on next poll
+        card._rowSignature = rowSignature;
         if (isNewCard) grid.appendChild(card);
     }
 
