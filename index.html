@@ -242,6 +242,11 @@
             isNewCard = true;
         }
 
+        // ⚡ Bolt: Implement data-level memoization to short-circuit expensive HTML string generation
+        const rowSignature = JSON.stringify([rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError, isNoteOpen]);
+        if (!isNewCard && card._rowSignature === rowSignature) return;
+        card._rowSignature = rowSignature;
+
         const deleteHTML = `<button class="delete-btn" onclick="deleteStockFromSheet('${ticker}', this)" title="Delete ${ticker}">✖</button>`;
 
         let logsHTML = `<div class="manual-logs-container">
