@@ -5,3 +5,7 @@
 ## 2024-05-24 - Avoiding Redundant JSON Processing on Polled Data
 **Learning:** In polling applications, `JSON.parse()` and subsequent data processing can be a significant overhead when data hasn't changed. Comparing the incoming raw response string (`await response.text()`) against a cached copy of the previous response allows the application to return early, bypassing parsing and DOM updates entirely.
 **Action:** Cache the raw text string from the network response and compare it against the incoming response string, breaking out early if they match. Always clear the cache inside error/catch blocks to guarantee proper data processing upon recovery.
+
+## 2026-09-05 - Data-Level Memoization
+**Learning:** Generating HTML strings with regex operations can be expensive even if they don't result in DOM updates. Caching only network responses fails to optimize unchanged rows when one row changes.
+**Action:** Use JSON.stringify on raw inputs to create a lightweight row signature cached on the DOM element. Compare this signature to bypass HTML string generation entirely for unchanged rows.

@@ -229,8 +229,13 @@
         let card = document.getElementById(`card-${safeTickerId}`);
         let isNewCard = false;
 
+        // ⚡ Bolt: Data-level memoization to bypass expensive HTML generation for unchanged rows
+        const rowSignature = JSON.stringify({ rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError });
+
         let isNoteOpen = false;
         if (card) {
+            if (card._rowSignature === rowSignature) return; // Skip if data hasn't changed
+
             const existingContainer = document.getElementById(`note-container-${safeTickerId}`);
             if (existingContainer && existingContainer.classList.contains('active')) {
                 isNoteOpen = true;
@@ -241,6 +246,8 @@
             card.id = `card-${safeTickerId}`;
             isNewCard = true;
         }
+
+        card._rowSignature = rowSignature;
 
         const deleteHTML = `<button class="delete-btn" onclick="deleteStockFromSheet('${ticker}', this)" title="Delete ${ticker}">✖</button>`;
 
