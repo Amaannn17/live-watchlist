@@ -197,6 +197,13 @@
             const safeTickerId = ticker.replace(/[^a-zA-Z0-9]/g, '-');
             activeTickers.add(safeTickerId);
 
+            // ⚡ Bolt: Implement data-level memoization. Skip processing if this specific row hasn't changed.
+            const rowSignature = JSON.stringify(row);
+            const card = document.getElementById(`card-${safeTickerId}`);
+            if (card && card._rowSignature === rowSignature) {
+                return;
+            }
+
             const existingTextarea = document.getElementById(`note-input-${safeTickerId}`);
             if (existingTextarea && document.activeElement === existingTextarea) {
                 return;
@@ -214,6 +221,12 @@
             );
 
             createOrUpdateCard(ticker, safeTickerId, rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError);
+
+            // Store signature for next poll
+            const updatedCard = document.getElementById(`card-${safeTickerId}`);
+            if (updatedCard) {
+                updatedCard._rowSignature = rowSignature;
+            }
         });
 
         Array.from(grid.children).forEach(child => {
