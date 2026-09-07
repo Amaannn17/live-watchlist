@@ -242,7 +242,12 @@
             isNewCard = true;
         }
 
-        const deleteHTML = `<button class="delete-btn" onclick="deleteStockFromSheet('${ticker}', this)" title="Delete ${ticker}">✖</button>`;
+        // ⚡ Bolt: Data-level memoization. Generate signature to short-circuit HTML string generation and regex operations.
+        const rowSignature = JSON.stringify({rawPrice, rawInvested, rawHistorical, rawPnl, manualLogs, userNote, hasError, isNoteOpen});
+        if (isNewCard || card._rowSignature !== rowSignature) {
+            card._rowSignature = rowSignature;
+
+            const deleteHTML = `<button class="delete-btn" onclick="deleteStockFromSheet('${ticker}', this)" title="Delete ${ticker}">✖</button>`;
 
         let logsHTML = `<div class="manual-logs-container">
                             <div class="logs-header">
@@ -345,12 +350,13 @@
             `;
         }
 
-        // ⚡ Bolt: Cache generated raw HTML to prevent unreliable innerHTML comparisons
-        if (card._rawHtml !== newInnerHTML) {
-            card._rawHtml = newInnerHTML;
-            card.innerHTML = newInnerHTML;
+            // ⚡ Bolt: Cache generated raw HTML to prevent unreliable innerHTML comparisons
+            if (card._rawHtml !== newInnerHTML) {
+                card._rawHtml = newInnerHTML;
+                card.innerHTML = newInnerHTML;
+            }
+            if (isNewCard) grid.appendChild(card);
         }
-        if (isNewCard) grid.appendChild(card);
     }
 
     fetchSheetData();
